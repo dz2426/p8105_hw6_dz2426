@@ -65,3 +65,42 @@ birth_w = read.csv("./data/birthweight.csv") %>%
 summary(is.na(birth_w)) # all have FALSE: 4342 --> NO MISSING VALUE
 ```
 
+```{r}
+# Check normality of bwt data
+birth_w %>% 
+  ggplot(aes(x = bwt)) +
+  geom_histogram(bins = 50) +
+  labs(x = "Birthweight (g)",
+       y = "Count",
+       title = "Normality Check on birthweight")
+
+# MLR - 'smoken' and 'momage' as predictors
+fit = lm(bwt ~ smoken + momage, data = birth_w)
+summary(fit)
+```
+
+```{r}
+fit %>% 
+  broom::tidy() %>% 
+  mutate(term = str_replace(term, "^smoken", "No. of cigarettes smoked per day")) %>%
+  mutate(term = str_replace(term, "^momage", "Mother's age at delivery")) %>% 
+  knitr::kable(digits = 3)
+```
+
+```{r}
+# Add residuals and predictions (fitted values) into dataset 'birth_w'
+bwt_resid_pred = 
+  birth_w %>% 
+  modelr::add_residuals(fit) %>% 
+  modelr::add_predictions(fit)
+
+# Plot: Residual vs. Fitted value 
+bwt_resid_pred %>% 
+  ggplot(aes(x = pred, y = resid)) +
+  geom_point(alpha = 0.4) + 
+  geom_abline(intercept = 0, slope = 0, color = "red") +
+  labs(x = "Predicted/Fitted value",
+      y = "Residual",
+      title = "Residual vs. Fitted value")
+```
+
