@@ -73,19 +73,25 @@ birth_w %>%
   labs(x = "Birthweight (g)",
        y = "Count",
        title = "Normality Check on birthweight")
+```
 
+**Comments:**  
+Birthweight data is approximately following a normal distribution. No transformation is needed in this case.
+
+```{r}
 # MLR - 'smoken' and 'momage' as predictors
 fit = lm(bwt ~ smoken + momage, data = birth_w)
 summary(fit)
-```
 
-```{r}
 fit %>% 
   broom::tidy() %>% 
   mutate(term = str_replace(term, "^smoken", "No. of cigarettes smoked per day")) %>%
   mutate(term = str_replace(term, "^momage", "Mother's age at delivery")) %>% 
   knitr::kable(digits = 3)
 ```
+
+**Comments:**  
+The multiple linear regression mode that I am interested in is how the average number of cigarettes smoked by the pregnant women per day ('smoken') and their age at delivery ('momage') predict the baby's birth weight ('bwt').
 
 ```{r}
 # Add residuals and predictions (fitted values) into dataset 'birth_w'
@@ -104,3 +110,5 @@ bwt_resid_pred %>%
       title = "Residual vs. Fitted value")
 ```
 
+**Comments:**  
+The residual vs. Fitted value plot shows a random pattern with evenly distributed value around the zero line, indicating equal error variance.
