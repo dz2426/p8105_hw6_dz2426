@@ -109,15 +109,15 @@ bwt_resid_pred =
 # Plot: Residual vs. Fitted value 
 bwt_resid_pred %>% 
   ggplot(aes(x = pred, y = resid)) +
-  geom_point(alpha = 0.4) + 
-  geom_abline(intercept = 0, slope = 0, color = "red") +
+  geom_point(alpha = 0.4) +
+  geom_smooth(se = FALSE, color = "red") +
   labs(x = "Predicted/Fitted value",
       y = "Residual",
       title = "Residual vs. Fitted value")
 ```
 
 **Comments:**  
-The residual vs. Fitted value plot shows a random pattern with evenly distributed value around the zero line, indicating equal error variance.
+The residual vs. Fitted value plot shows a generally random pattern with evenly distributed value around the zero line. However, since the estimated line is not entirely horizontal, it indicates there is unequal error variance (heteroscedasticity) and outliers.
 
 ```{r}
 # MLR
@@ -141,9 +141,8 @@ summary(fit3)
 ```
 
 ```{r}
-set.seed(20)
-
 # Cross validating
+set.seed(1)
 cv_birthw = crossv_mc(birth_w, 100)
 ```
 
@@ -202,4 +201,66 @@ cv_results %>%
 ```
 
 **Comments:**  
-Based on the violin plot and the calculated average root mean squared error (RMSE), the MLR that includes head circumference, length, sex, and all interactions as predictors (model 3) has the lowest average RMSE (288.0).
+Based on the violin plot and the calculated average root mean squared error (RMSE), the MLR that includes head circumference, length, sex, and all interactions as predictors (model 3) has the lowest average RMSE (288.6), in other words, the lowest standard deviation of the unexplained variance.  
+Therefore, model 3 has the best fit, which means it has the most accurate prediction of the resposne among the three.
+
+# Problem 2
+```{r}
+# Import amd tidy dataset
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+```{r}
+set.seed(1)
+
+boot_strap_results = 
+  weather_df %>% 
+  bootstrap(n = 1000) %>% 
+  mutate(
+    models = map(strap, ~lm(tmax ~ tmin, data = .x)),
+    tidy_models = map(models, broom::tidy), # include estimate, term
+    glance_models = map(models, broom::glance)) %>% # include p.value, r.squared
+  unnest(tidy_models, glance_models) %>% 
+  select(.id, term, estimate, r.squared) %>% 
+  pivot_wider(
+    names_from = term,
+    values_from = estimate) %>% 
+  rename(beta0_hat = `(Intercept)`,
+         beta1_hat = tmin) %>% 
+  mutate(log_b0xb1 = log(beta0_hat * beta1_hat)) %>% # produce log estimate
+  janitor::clean_names() %>% 
+  select(r_squared, log_b0xb1)
+
+boot_strap_results
+```
+
+```{r}
+boot_strap_results %>% 
+  ggplot(aes(x = r_squared)) +
+  geom_density(fill = "lightblue") +
+  labs(x = ~R^2,
+       y = "Density",
+       title = "Distribution of" ~R^2,
+       caption = "5000 bootstrap samples")
+```
+
+```{r}
+boot_strap_results %>% 
+  ggplot(aes(x = log_b0xb1)) +
+  geom_density(fill = "lightyellow") +
+  labs(x = ~log(hat(beta)[0] %*% hat(beta)[1]),
+       y = "Density",
+       title = "Distribution of" ~log(hat(beta)[0] %*% hat(beta)[1]),
+       caption = "5000 bootstrap samples")
+```
+
