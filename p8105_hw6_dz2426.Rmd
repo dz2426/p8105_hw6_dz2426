@@ -96,7 +96,7 @@ fit1 %>%
 ```
 
 **Comments:**  
-The multiple linear regression mode that I am interested in is how the average number of cigarettes smoked by the pregnant women per day ('smoken') and their age at delivery ('momage') predict the baby's birth weight ('bwt').  
+The multiple linear regression mode that I am interested in is how the average number of cigarettes smoked by the pregnant women per day (`smoken`) and their age at delivery (`momage`) predict the baby's birth weight (`bwt`).  
 Results show that for every unit increase in the average number of cigarettes smoked per day during pregnancy, baby's birthweight decreases by 5.971 g, adjusting for mother's age at delivery. For every unit increase in mother's age at delivery, baby's birthweight increases by 18.792 g, adjusting for average number of cigarettes smoked per day during pregnancy. The low adjusted R-squared (0.0254) shows that only 2.54 % of the variation in the outcome variable can be explained by the predictor variables, adjusting for the number of predictors.
 
 ```{r}
@@ -225,7 +225,7 @@ set.seed(1)
 
 boot_strap_results = 
   weather_df %>% 
-  bootstrap(n = 1000) %>% 
+  bootstrap(n = 5000) %>% 
   mutate(
     models = map(strap, ~lm(tmax ~ tmin, data = .x)),
     tidy_models = map(models, broom::tidy), # include estimate, term
@@ -245,22 +245,37 @@ boot_strap_results
 ```
 
 ```{r}
+# Density plot of R-squared
 boot_strap_results %>% 
   ggplot(aes(x = r_squared)) +
   geom_density(fill = "lightblue") +
-  labs(x = ~R^2,
+  labs(x = ~hat(R)^2,
        y = "Density",
-       title = "Distribution of" ~R^2,
-       caption = "5000 bootstrap samples")
+       title = "Distribution of" ~hat(R)^2,
+       caption = "5000 bootstrap samples of linear model (tmax ~ tmin)")
+
+# 95% Confidence Interval
+CI_rsquared = round(quantile(pull(boot_strap_results, r_squared), probs = c(0.025,0.975)), digits = 2)
 ```
 
+**Comments:**  
+The density plot of `R-squared` shows a left-skewed distribution, and tells us the majority of `R-squared` estimates is around 0.91. This indicates a strong correlation and good fit. It also means that the vast majority (~91%) of the variance in the response variable `tmax` can be explained collectively by the predictor variable `tmin`.  
+The 95% CI for `R-squared` is (`r CI_rsquared`).
+
 ```{r}
+# Density plot of log_b0xb1
 boot_strap_results %>% 
   ggplot(aes(x = log_b0xb1)) +
   geom_density(fill = "lightyellow") +
   labs(x = ~log(hat(beta)[0] %*% hat(beta)[1]),
        y = "Density",
        title = "Distribution of" ~log(hat(beta)[0] %*% hat(beta)[1]),
-       caption = "5000 bootstrap samples")
+       caption = "5000 bootstrap samples of linear model (tmax ~ tmin)")
+
+# 95% Confidence Interval
+CI_log_b0xb1 = round(quantile(pull(boot_strap_results, log_b0xb1), probs = c(0.025,0.975)), digits = 2)
 ```
 
+**Comments:**  
+The density plot of `log_b0xb1` indicates a normal distribution of `log_b0xb1` estimates, centering around 2.025.  
+The 95% CI for `log_b0xb1` is (`r CI_log_b0xb1`).
