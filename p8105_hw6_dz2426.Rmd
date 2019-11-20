@@ -177,7 +177,7 @@ cv_results %>%
   geom_violin() +
   labs(x = "Model",
        y = "RMSE",
-       title = "Distribution of RMSE in each model")
+       title = "Distribution of root mean squared error in each model")
 ```
 
 ```{r}
@@ -201,3 +201,5 @@ cv_results %>%
   
 ```
 
+**Comments:**  
+Based on the violin plot and the calculated average root mean squared error (RMSE), the MLR that includes head circumference, length, sex, and all interactions as predictors (model 3) has the lowest average RMSE (288.0).
